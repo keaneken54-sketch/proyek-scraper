@@ -1,6 +1,6 @@
-// api/data.js (updated version)
+// api/data.js
 import PJUScraper from '../lib/scraper.js';
-import { logData, formatForESP32, isValidData } from '../lib/utils.js';
+import { logData, formatForESP32 } from '../lib/utils.js';
 
 const scraper = new PJUScraper();
 
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     const scrapedData = await scraper.scrapeData();
     
     // Log the data
-    logData(scrapedData, 'Vercel API');
+    logData(scrapedData, 'Proyek Scraper API');
     
     // Format for ESP32
     const responseData = formatForESP32(scrapedData);

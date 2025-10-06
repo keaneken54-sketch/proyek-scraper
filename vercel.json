@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "pju-scraper-api",
+  "name": "proyek-scraper",
   "builds": [
     {
       "src": "api/**/*.js",
