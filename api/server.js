@@ -2,22 +2,30 @@
 
 import express from 'express';
 import chromium from '@sparticuz/chromium';
-// Ganti puppeteer-core dengan puppeteer-extra
-import puppeteer from 'puppeteer-extra';
-// Impor plugin stealth
+// Kita akan menggunakan puppeteer-core lagi, dan menggabungkannya dengan puppeteer-extra
+import puppeteer from 'puppeteer-core';
+import { addExtra } from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
-// Aktifkan plugin stealth
-puppeteer.use(StealthPlugin());
+// Gabungkan puppeteer-core dengan fitur extra
+const puppeteerExtra = addExtra(puppeteer);
+
+// Ambil plugin stealth
+const stealth = StealthPlugin();
+// Hapus evasion yang menyebabkan error
+stealth.enabledEvasions.delete('chrome.app');
+
+// Aktifkan plugin yang sudah dimodifikasi
+puppeteerExtra.use(stealth);
 
 const app = express();
 
 async function scrapeData(req, res) {
   let browser = null;
   try {
-    console.log("Meluncurkan browser dengan @sparticuz/chromium dalam mode siluman...");
+    console.log("Meluncurkan browser dengan @sparticuz/chromium dan stealth yang dimodifikasi...");
 
-    browser = await puppeteer.launch({
+    browser = await puppeteerExtra.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
@@ -61,7 +69,6 @@ async function scrapeData(req, res) {
     });
   } catch (error) {
     console.error('Error saat scraping:', error);
-    // Kita hapus screenshot untuk sementara agar tidak memperlambat
     if (browser) await browser.close();
     res.status(500).json({ error: 'Gagal melakukan scraping', message: error.message });
   }
