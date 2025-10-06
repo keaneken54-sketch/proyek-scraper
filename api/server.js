@@ -13,7 +13,7 @@ async function scrapeData(req, res) {
     const browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(), // Perhatikan ()
+      executablePath: await chromium.executablePath(),
       headless: chromium.headless,
       ignoreHTTPSErrors: true,
     });
@@ -21,14 +21,20 @@ async function scrapeData(req, res) {
     const page = await browser.newPage();
     
     console.log("Membuka halaman target...");
-    await page.goto('https://pju-monitoring-web-pens.vercel.app/dashboard');
+    // Menambah timeout pada navigasi untuk halaman yang mungkin lambat
+    await page.goto('https://pju-monitoring-web-pens.vercel.app/dashboard', {
+      waitUntil: 'networkidle0', // Tunggu sampai tidak ada aktivitas jaringan
+    });
 
     console.log("Mencari data di halaman...");
-    const voltageXPath = "//div[p[text()='Tegangan']]/p[2]";
-await page.waitForSelector(`xpath/${voltageXPath}`);
+    
+    // --- STRATEGI MENUNGGU YANG DIPERBAIKI ---
+    // Tunggu sampai container utama yang berisi semua statistik muncul
+    // Ini lebih andal daripada menunggu satu elemen spesifik
+    await page.waitForSelector('.grid.gap-4');
 
-    // Ambil semua data
-    const voltageElement = await page.$x(voltageXPath);
+    // Setelah container muncul, kita bisa langsung ambil semua data
+    const voltageElement = await page.$x("//div[p[text()='Tegangan']]/p[2]");
     const currentElement = await page.$x("//div[p[text()='Arus']]/p[2]");
     const powerElement = await page.$x("//div[p[text()='Daya']]/p[2]");
 
@@ -51,6 +57,6 @@ await page.waitForSelector(`xpath/${voltageXPath}`);
   }
 }
 
-app.get('/api/server', scrapeData); // Arahkan ke endpoint spesifik
+app.get('/api/server', scrapeData);
 
 export default app;
