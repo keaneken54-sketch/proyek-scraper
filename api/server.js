@@ -2,14 +2,20 @@
 
 import express from 'express';
 import chromium from '@sparticuz/chromium';
-import puppeteer from 'puppeteer-core';
+// Ganti puppeteer-core dengan puppeteer-extra
+import puppeteer from 'puppeteer-extra';
+// Impor plugin stealth
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+
+// Aktifkan plugin stealth
+puppeteer.use(StealthPlugin());
 
 const app = express();
 
 async function scrapeData(req, res) {
-  let browser = null; // Definisikan browser di luar try-catch
+  let browser = null;
   try {
-    console.log("Meluncurkan browser dengan @sparticuz/chromium...");
+    console.log("Meluncurkan browser dengan @sparticuz/chromium dalam mode siluman...");
 
     browser = await puppeteer.launch({
       args: chromium.args,
@@ -38,7 +44,6 @@ async function scrapeData(req, res) {
     const powerElements = await page.$$(`xpath/${powerXPath}`);
 
     if (voltageElements.length === 0 || currentElements.length === 0 || powerElements.length === 0) {
-      // Kita sengaja membuat error di sini untuk memicu screenshot
       throw new Error("Satu atau lebih elemen data (berdasarkan ikon) tidak ditemukan di halaman.");
     }
 
@@ -54,27 +59,11 @@ async function scrapeData(req, res) {
       current: current.trim(),
       power: power.trim(),
     });
-
   } catch (error) {
     console.error('Error saat scraping:', error);
-    
-    // --- BLOK DEBUGGING DENGAN SCREENSHOT ---
-    if (browser) { // Pastikan browser sudah terdefinisi
-      // Ambil screenshot sebagai Base64
-      const page = (await browser.pages())[0]; // Ambil halaman yang aktif
-      const screenshotBase64 = await page.screenshot({ encoding: 'base64' });
-      await browser.close();
-
-      // Kirim error beserta screenshot
-      res.status(500).json({
-        error: 'Gagal melakukan scraping, lihat data screenshot.',
-        message: error.message,
-        screenshot: screenshotBase64 
-      });
-    } else {
-      // Jika browser bahkan gagal启动
-      res.status(500).json({ error: 'Gagal meluncurkan browser', message: error.message });
-    }
+    // Kita hapus screenshot untuk sementara agar tidak memperlambat
+    if (browser) await browser.close();
+    res.status(500).json({ error: 'Gagal melakukan scraping', message: error.message });
   }
 }
 
