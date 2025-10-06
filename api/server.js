@@ -9,14 +9,16 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 const puppeteerExtra = addExtra(puppeteer);
 
 const stealth = StealthPlugin();
-// Disable the problematic evasions
+// Nonaktifkan semua evasion yang bermasalah
 stealth.enabledEvasions.delete('chrome.app');
-stealth.enabledEvasions.delete('chrome.csi'); // <-- ADD THIS LINE
+stealth.enabledEvasions.delete('chrome.csi');
+stealth.enabledEvasions.delete('chrome.loadTimes'); // <-- TAMBAHKAN BARIS INI
 
 puppeteerExtra.use(stealth);
 
 const app = express();
 
+// ... Sisa kode sama persis ...
 async function scrapeData(req, res) {
   let browser = null;
   try {
