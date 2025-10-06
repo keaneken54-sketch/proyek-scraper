@@ -21,26 +21,29 @@ async function scrapeData(req, res) {
     const page = await browser.newPage();
     
     console.log("Membuka halaman target...");
-    // Menambah timeout pada navigasi untuk halaman yang mungkin lambat
     await page.goto('https://pju-monitoring-web-pens.vercel.app/dashboard', {
-      waitUntil: 'networkidle0', // Tunggu sampai tidak ada aktivitas jaringan
+      waitUntil: 'networkidle0',
     });
 
     console.log("Mencari data di halaman...");
     
-    // --- STRATEGI MENUNGGU YANG DIPERBAIKI ---
     // Tunggu sampai container utama yang berisi semua statistik muncul
-    // Ini lebih andal daripada menunggu satu elemen spesifik
     await page.waitForSelector('.grid.gap-4');
 
-    // Setelah container muncul, kita bisa langsung ambil semua data
-    const voltageElement = await page.$x("//div[p[text()='Tegangan']]/p[2]");
-    const currentElement = await page.$x("//div[p[text()='Arus']]/p[2]");
-    const powerElement = await page.$x("//div[p[text()='Daya']]/p[2]");
+    // --- BAGIAN YANG DIPERBAIKI ---
+    // Gunakan metode modern page.$$('xpath/...') untuk memilih elemen
+    const voltageElements = await page.$$("xpath///div[p[text()='Tegangan']]/p[2]");
+    const currentElements = await page.$$("xpath///div[p[text()='Arus']]/p[2]");
+    const powerElements = await page.$$("xpath///div[p[text()='Daya']]/p[2]");
 
-    const voltage = await page.evaluate(el => el.textContent, voltageElement[0]);
-    const current = await page.evaluate(el => el.textContent, currentElement[0]);
-    const power = await page.evaluate(el => el.textContent, powerElement[0]);
+    // Pastikan elemen ditemukan sebelum mencoba membaca isinya
+    if (voltageElements.length === 0 || currentElements.length === 0 || powerElements.length === 0) {
+      throw new Error("Satu atau lebih elemen data tidak ditemukan di halaman.");
+    }
+
+    const voltage = await page.evaluate(el => el.textContent, voltageElements[0]);
+    const current = await page.evaluate(el => el.textContent, currentElements[0]);
+    const power = await page.evaluate(el => el.textContent, powerElements[0]);
     
     await browser.close();
     console.log("Scraping selesai.");
