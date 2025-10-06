@@ -27,18 +27,20 @@ async function scrapeData(req, res) {
 
     console.log("Mencari data di halaman...");
     
-    // Tunggu sampai container utama yang berisi semua statistik muncul
     await page.waitForSelector('.grid.gap-4');
 
-    // --- BAGIAN YANG DIPERBAIKI ---
-    // Gunakan metode modern page.$$('xpath/...') untuk memilih elemen
-    const voltageElements = await page.$$("xpath///div[p[text()='Tegangan']]/p[2]");
-    const currentElements = await page.$$("xpath///div[p[text()='Arus']]/p[2]");
-    const powerElements = await page.$$("xpath///div[p[text()='Daya']]/p[2]");
+    // --- XPATH BARU YANG LEBIH ANDAL ---
+    // Mencari div induk berdasarkan path ikon SVG unik, lalu mengambil elemen <p> kedua (nilainya)
+    const voltageXPath = "//*[local-name()='svg' and contains(@class, 'lucide-zap')]/ancestor::div[contains(@class, 'flex')]//p[2]";
+    const currentXPath = "//*[local-name()='svg' and contains(@class, 'lucide-wave-pulse')]/ancestor::div[contains(@class, 'flex')]//p[2]";
+    const powerXPath = "//*[local-name()='svg' and contains(@class, 'lucide-gauge')]/ancestor::div[contains(@class, 'flex')]//p[2]";
 
-    // Pastikan elemen ditemukan sebelum mencoba membaca isinya
+    const voltageElements = await page.$$(`xpath/${voltageXPath}`);
+    const currentElements = await page.$$(`xpath/${currentXPath}`);
+    const powerElements = await page.$$(`xpath/${powerXPath}`);
+
     if (voltageElements.length === 0 || currentElements.length === 0 || powerElements.length === 0) {
-      throw new Error("Satu atau lebih elemen data tidak ditemukan di halaman.");
+      throw new Error("Satu atau lebih elemen data (berdasarkan ikon) tidak ditemukan di halaman.");
     }
 
     const voltage = await page.evaluate(el => el.textContent, voltageElements[0]);
