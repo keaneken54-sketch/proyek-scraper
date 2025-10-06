@@ -3,29 +3,19 @@
 import express from 'express';
 import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
-import { addExtra } from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-
-const puppeteerExtra = addExtra(puppeteer);
-
-const stealth = StealthPlugin();
-// Nonaktifkan semua evasion yang bermasalah
-stealth.enabledEvasions.delete('chrome.app');
-stealth.enabledEvasions.delete('chrome.csi');
-stealth.enabledEvasions.delete('chrome.loadTimes'); // <-- TAMBAHKAN BARIS INI
-
-puppeteerExtra.use(stealth);
 
 const app = express();
 
-// ... Sisa kode sama persis ...
 async function scrapeData(req, res) {
   let browser = null;
   try {
-    console.log("Meluncurkan browser dengan @sparticuz/chromium dan stealth yang dimodifikasi...");
+    console.log("Meluncurkan browser dengan User-Agent kustom...");
 
-    browser = await puppeteerExtra.launch({
-      args: chromium.args,
+    browser = await puppeteer.launch({
+      args: [
+        ...chromium.args,
+        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36'
+      ],
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
       headless: chromium.headless,
@@ -51,7 +41,7 @@ async function scrapeData(req, res) {
     const powerElements = await page.$$(`xpath/${powerXPath}`);
 
     if (voltageElements.length === 0 || currentElements.length === 0 || powerElements.length === 0) {
-      throw new Error("Satu atau lebih elemen data (berdasarkan ikon) tidak ditemukan di halaman.");
+      throw new Error("Elemen data tidak ditemukan setelah mengganti User-Agent.");
     }
 
     const voltage = await page.evaluate(el => el.textContent, voltageElements[0]);
