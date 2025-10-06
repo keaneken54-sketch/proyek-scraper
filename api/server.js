@@ -25,7 +25,7 @@ async function scrapeData(req, res) {
 
     console.log("Mencari data di halaman...");
     const voltageXPath = "//div[p[text()='Tegangan']]/p[2]";
-    await page.waitForXPath(voltageXPath);
+await page.waitForSelector(`xpath/${voltageXPath}`);
 
     // Ambil semua data
     const voltageElement = await page.$x(voltageXPath);
