@@ -9,8 +9,9 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 const puppeteerExtra = addExtra(puppeteer);
 
 const stealth = StealthPlugin();
+// Disable the problematic evasions
 stealth.enabledEvasions.delete('chrome.app');
-stealth.enabledEvasions.delete('chrome.csi');
+stealth.enabledEvasions.delete('chrome.csi'); // <-- ADD THIS LINE
 
 puppeteerExtra.use(stealth);
 
