@@ -2,20 +2,16 @@
 
 import express from 'express';
 import chromium from '@sparticuz/chromium';
-// Kita akan menggunakan puppeteer-core lagi, dan menggabungkannya dengan puppeteer-extra
 import puppeteer from 'puppeteer-core';
 import { addExtra } from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
-// Gabungkan puppeteer-core dengan fitur extra
 const puppeteerExtra = addExtra(puppeteer);
 
-// Ambil plugin stealth
 const stealth = StealthPlugin();
-// Hapus evasion yang menyebabkan error
 stealth.enabledEvasions.delete('chrome.app');
+stealth.enabledEvasions.delete('chrome.csi');
 
-// Aktifkan plugin yang sudah dimodifikasi
 puppeteerExtra.use(stealth);
 
 const app = express();
