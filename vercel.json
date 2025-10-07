@@ -31,5 +31,11 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/data.js": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  }
 }

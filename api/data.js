@@ -1,8 +1,15 @@
 // api/data.js
-import PJUScraper from '../lib/scraper.js';
-import { logData, formatForESP32 } from '../lib/utils.js';
+import PuppeteerScraper from '../lib/scraper-puppeteer.js';
+import { formatForESP32Simple } from '../lib/utils.js';
 
-const scraper = new PJUScraper();
+const scraper = new PuppeteerScraper();
+
+// Cache untuk mengurangi request berulang
+let cache = {
+  data: null,
+  timestamp: null,
+  ttl: 30000 // 30 detik
+};
 
 export default async function handler(req, res) {
   // Set CORS headers
@@ -16,7 +23,6 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // Only allow GET requests
   if (req.method !== 'GET') {
     return res.status(405).json({
       success: false,
@@ -25,28 +31,59 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('🔄 Received request for PJU data');
+    console.log('🔄 Received API request...');
+
+    // Check cache
+    const now = Date.now();
+    if (cache.data && cache.timestamp && (now - cache.timestamp) < cache.ttl) {
+      console.log('⚡ Serving from cache');
+      return res.status(200).json(cache.data);
+    }
+
+    console.log('🌐 Starting Puppeteer scraping...');
     
-    // Scrape data
-    const scrapedData = await scraper.scrapeData();
+    // Scrape data dengan Puppeteer
+    const scrapedData = await scraper.scrapeWithBrowser();
     
-    // Log the data
-    logData(scrapedData, 'Proyek Scraper API');
+    if (!scrapedData.success) {
+      return res.status(500).json({
+        success: false,
+        timestamp: new Date().toISOString(),
+        error: scrapedData.error
+      });
+    }
+
+    // Format untuk ESP32 (simple - numeric values only)
+    const responseData = formatForESP32Simple(scrapedData);
     
-    // Format for ESP32
-    const responseData = formatForESP32(scrapedData);
+    // Update cache
+    cache = {
+      data: responseData,
+      timestamp: now,
+      ttl: 30000
+    };
+
+    console.log('✅ Scraping completed successfully');
     
-    // Send response
     return res.status(200).json(responseData);
 
   } catch (error) {
     console.error('❌ API Error:', error);
     
+    // Return cached data jika ada, meskipun error
+    if (cache.data) {
+      console.log('🔄 Returning cached data due to error');
+      return res.status(200).json({
+        ...cache.data,
+        note: 'Data from cache (recent error)',
+        cached: true
+      });
+    }
+    
     return res.status(500).json({
       success: false,
       timestamp: new Date().toISOString(),
-      error: error.message,
-      note: 'Check server logs for details'
+      error: error.message
     });
   }
 }
