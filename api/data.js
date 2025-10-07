@@ -12,22 +12,25 @@ let cache = {
 };
 
 export default async function handler(req, res) {
-  // Set CORS headers
+  // Set CORS headers manually
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, POST');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
   res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate');
 
-  // Handle OPTIONS request for CORS
+  // Handle OPTIONS request for CORS preflight
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
+  // Only allow GET requests
   if (req.method !== 'GET') {
-    return res.status(405).json({
+    res.status(405).json({
       success: false,
-      error: 'Method not allowed'
+      error: 'Method not allowed. Use GET or OPTIONS.'
     });
+    return;
   }
 
   try {
@@ -37,7 +40,8 @@ export default async function handler(req, res) {
     const now = Date.now();
     if (cache.data && cache.timestamp && (now - cache.timestamp) < cache.ttl) {
       console.log('⚡ Serving from cache');
-      return res.status(200).json(cache.data);
+      res.status(200).json(cache.data);
+      return;
     }
 
     console.log('🌐 Starting Puppeteer scraping...');
@@ -46,11 +50,12 @@ export default async function handler(req, res) {
     const scrapedData = await scraper.scrapeWithBrowser();
     
     if (!scrapedData.success) {
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         timestamp: new Date().toISOString(),
         error: scrapedData.error
       });
+      return;
     }
 
     // Format untuk ESP32 (simple - numeric values only)
@@ -65,7 +70,7 @@ export default async function handler(req, res) {
 
     console.log('✅ Scraping completed successfully');
     
-    return res.status(200).json(responseData);
+    res.status(200).json(responseData);
 
   } catch (error) {
     console.error('❌ API Error:', error);
@@ -73,14 +78,15 @@ export default async function handler(req, res) {
     // Return cached data jika ada, meskipun error
     if (cache.data) {
       console.log('🔄 Returning cached data due to error');
-      return res.status(200).json({
+      res.status(200).json({
         ...cache.data,
         note: 'Data from cache (recent error)',
         cached: true
       });
+      return;
     }
     
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       timestamp: new Date().toISOString(),
       error: error.message
