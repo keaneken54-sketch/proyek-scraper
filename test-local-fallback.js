@@ -12,7 +12,7 @@ async function testFallback() {
     data: {
       suhu_udara: '28.5°C',
       tekanan_udara: '1013.2 mbar',
-      curah_hujan: '0 mm',
+      curah_hujan: '2 mm',
       arah_angin: '135° Tenggara',
       kelembaban_udara: '65.0%',
       kecepatan_angin: '2.5 m/s',
