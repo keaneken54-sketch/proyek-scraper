@@ -29,6 +29,7 @@ const server = http.createServer(async (req, res) => {
       console.log('✅ API response sent');
       
     } catch (error) {
+      console.error('❌ Server error:', error);
       res.setHeader('Content-Type', 'application/json');
       res.writeHead(500);
       res.end(JSON.stringify({
@@ -48,4 +49,5 @@ server.listen(PORT, () => {
   console.log(`🚀 Local server running at http://localhost:${PORT}/api/data`);
   console.log(`📡 Test with: curl http://localhost:${PORT}/api/data`);
   console.log(`🌐 Or open in browser: http://localhost:${PORT}/api/data`);
+  console.log(`⏹️  Press Ctrl+C to stop\n`);
 });
