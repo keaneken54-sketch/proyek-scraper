@@ -1,14 +1,13 @@
 {
   "name": "proyek-scraper-netlify",
-  "version": "1.0.0",
+  "version": "1.0.0", 
   "type": "module",
   "description": "Environmental Monitoring Scraper with Puppeteer",
   "main": "index.js",
   "scripts": {
     "dev": "netlify dev",
-    "test": "node test-local.js",
     "start": "node server-local.js",
-    "server": "node server-local.js"
+    "build": "echo 'No build needed'"
   },
   "dependencies": {
     "puppeteer": "^21.5.0"
